@@ -12,20 +12,15 @@ class DatabaseManager {
   private db: Database.Database;
 
   private constructor() {
-    console.log('=== DatabaseManager 初期化 ===');
-    console.log('DATABASE_PATH:', DATABASE_PATH);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('VERCEL:', process.env.VERCEL);
+    console.log('DatabaseManager初期化:', DATABASE_PATH);
     
     this.db = new Database(DATABASE_PATH);
     this.db.pragma('journal_mode = WAL');
     
     // Vercel環境では自動的にテーブルを初期化
     if (process.env.VERCEL) {
-      console.log('Vercel環境: テーブルを初期化中...');
+      console.log('Vercel環境: テーブル初期化中');
       this.initializeTables();
-    } else {
-      console.log('ローカル環境: 既存のデータベースファイルを使用');
     }
   }
 

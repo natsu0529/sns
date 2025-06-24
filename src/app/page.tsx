@@ -26,6 +26,8 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         setPosts(data);
+      } else {
+        console.error('投稿取得失敗:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('投稿の取得でエラー:', error);
@@ -51,8 +53,15 @@ export default function Home() {
         setNewPost('');
         fetchPosts(); // 投稿一覧を再読み込み
       } else {
-        const error = await response.json();
-        alert(error.error || '投稿に失敗しました');
+        let errorMessage = '投稿に失敗しました';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (jsonError) {
+          // JSONパースエラーの場合、ステータステキストを使用
+          errorMessage = `投稿に失敗しました (${response.status}: ${response.statusText})`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('投稿作成エラー:', error);
@@ -71,6 +80,8 @@ export default function Home() {
       
       if (response.ok) {
         fetchPosts(); // 投稿一覧を再読み込み
+      } else {
+        console.error('いいね処理失敗:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('いいねエラー:', error);
@@ -92,8 +103,14 @@ export default function Home() {
         fetchPosts(); // 投稿一覧を再読み込み
         alert('投稿が削除されました');
       } else {
-        const error = await response.json();
-        alert(error.error || '削除に失敗しました');
+        let errorMessage = '削除に失敗しました';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (jsonError) {
+          errorMessage = `削除に失敗しました (${response.status}: ${response.statusText})`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('削除エラー:', error);

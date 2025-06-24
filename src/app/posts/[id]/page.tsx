@@ -38,6 +38,8 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
           const posts = await response.json();
           const currentPost = posts.find((p: Post) => p.id === parseInt(resolvedParams.id));
           setPost(currentPost || null);
+        } else {
+          console.error('投稿取得失敗:', response.status, response.statusText);
         }
       } catch (error) {
         console.error('投稿取得エラー:', error);

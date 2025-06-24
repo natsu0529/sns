@@ -24,53 +24,29 @@ const handler = NextAuth({
         password: { label: 'パスワード', type: 'password' }
       },
       async authorize(credentials): Promise<ExtendedUser | null> {
-        console.log('=== 認証処理開始 ===');
-        console.log('入力された認証情報:', {
-          username: credentials?.username,
-          password: credentials?.password ? '入力あり' : '入力なし'
-        });
-
         if (!credentials?.username || !credentials?.password) {
-          console.log('認証情報が不足しています');
+          console.log('認証失敗: 認証情報が不足');
           return null;
         }
 
         const db = DatabaseManager.getInstance();
         try {
-          console.log('データベースからユーザー検索:', credentials.username);
-          console.log('データベース接続確認');
-          
-          // デバッグ: 全ユーザー一覧を取得
-          const allUsers = db.all('SELECT id, username FROM users');
-          console.log('データベース内の全ユーザー:', allUsers);
-          
           const user = db.get(
             'SELECT * FROM users WHERE username = ?',
             credentials.username
           ) as UserRecord | undefined;
 
-          console.log('ユーザー検索結果:', user ? `見つかった (ID: ${user.id})` : '見つからない');
+          console.log(`認証試行: ${credentials.username} -> ${user ? '見つかった' : '見つからない'}`);
 
-          if (user) {
-            console.log('パスワード比較開始');
-            console.log('入力パスワード:', credentials.password);
-            console.log('保存されたハッシュ:', user.password);
-            
-            const passwordMatch = await bcrypt.compare(credentials.password, user.password);
-            console.log('パスワード比較結果:', passwordMatch);
-            
-            if (passwordMatch) {
-              console.log('認証成功:', user.username);
-              return {
-                id: user.id.toString(),
-                name: user.username,
-              };
-            } else {
-              console.log('パスワード不一致');
-            }
+          if (user && await bcrypt.compare(credentials.password, user.password)) {
+            console.log(`認証成功: ${user.username}`);
+            return {
+              id: user.id.toString(),
+              name: user.username,
+            };
           }
           
-          console.log('認証失敗');
+          console.log('認証失敗: パスワード不一致またはユーザー不存在');
           return null;
         } catch (error) {
           console.error('認証エラー:', error);
