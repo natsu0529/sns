@@ -129,8 +129,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     fetchPost();
     fetchReplies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedParams.id]); // IDが変更された時のみ実行
+  }, [resolvedParams.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!session) {
     return (
