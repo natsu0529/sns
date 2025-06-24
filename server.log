@@ -70,3 +70,11 @@ Production database tables initialized successfully
  GET /api/auth/session 200 in 2ms
  ✓ Compiled in 96ms (374 modules)
  GET /auth/signin 200 in 14ms
+ ✓ Compiled in 263ms (851 modules)
+ GET /auth/signin 200 in 80ms
+ ✓ Compiled in 89ms (374 modules)
+ GET /auth/signin 200 in 10ms
+ ✓ Compiled in 96ms (374 modules)
+ GET /auth/signin 200 in 75ms
+ ✓ Compiled in 94ms (374 modules)
+ GET /auth/signin 200 in 8ms

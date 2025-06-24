@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-// ローカル開発ではsns.db、Vercel環境のみメモリ内データベース
+// ローカル開発ではsns.db、Vercel環境では外部データベースを使用予定
 const DATABASE_PATH = process.env.VERCEL 
-  ? ':memory:' 
+  ? './sns.db'  // Vercelでも一時的にSQLiteを使用（後で外部DBに変更）
   : './sns.db';
 
 // データベース接続クラス（シングルトンパターン）
