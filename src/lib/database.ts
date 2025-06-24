@@ -14,7 +14,7 @@ class DatabaseManager {
   }
 
   // クエリ実行
-  run(sql: string, ...params: unknown[]): unknown {
+  run(sql: string, ...params: unknown[]): Database.RunResult {
     return this.db.prepare(sql).run(...params);
   }
 

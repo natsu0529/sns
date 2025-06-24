@@ -129,7 +129,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     fetchPost();
     fetchReplies();
-  }); // 依存関係配列を削除してwarningを回避
+  }, [fetchPost, fetchReplies]); // 依存関係を正しく設定
 
   if (!session) {
     return (

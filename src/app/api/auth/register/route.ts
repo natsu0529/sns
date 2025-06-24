@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface UserRecord {
+  id: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { username, password }: { username: string; password: string } = await request.json();
 
     // バリデーション
     if (!username || !password) {
@@ -27,7 +32,7 @@ export async function POST(request: NextRequest) {
       const existingUser = db.get(
         'SELECT id FROM users WHERE username = ?',
         username
-      );
+      ) as UserRecord | undefined;
 
       if (existingUser) {
         return NextResponse.json(

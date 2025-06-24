@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface PostWithStats {
+  id: number;
+  content: string;
+  created_at: string;
+  username: string;
+  like_count: number;
+  reply_count: number;
+}
+
+interface UserRecord {
+  id: number;
+}
+
 export async function GET() {
   const db = new DatabaseManager();
   try {
@@ -20,7 +34,7 @@ export async function GET() {
       LEFT JOIN replies r ON p.id = r.post_id
       GROUP BY p.id, p.content, p.created_at, u.username
       ORDER BY p.created_at DESC
-    `);
+    `) as PostWithStats[];
 
     return NextResponse.json(posts);
   } catch (error) {
@@ -44,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { content } = await request.json();
+    const { content }: { content: string } = await request.json();
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -66,7 +80,7 @@ export async function POST(request: NextRequest) {
       const user = db.get(
         'SELECT id FROM users WHERE username = ?',
         session.user.name
-      ) as { id: number } | undefined;
+      ) as UserRecord | undefined;
 
       if (!user) {
         return NextResponse.json(

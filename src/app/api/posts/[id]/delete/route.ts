@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface UserRecord {
+  id: number;
+}
+
+interface PostRecord {
+  user_id: number;
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,7 +33,7 @@ export async function DELETE(
       const user = db.get(
         'SELECT id FROM users WHERE username = ?',
         session.user.name
-      ) as { id: number } | undefined;
+      ) as UserRecord | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -37,7 +46,7 @@ export async function DELETE(
       const post = db.get(
         'SELECT user_id FROM posts WHERE id = ?',
         postId
-      ) as { user_id: number } | undefined;
+      ) as PostRecord | undefined;
 
       if (!post) {
         return NextResponse.json(
@@ -69,7 +78,7 @@ export async function DELETE(
       );
 
     } finally {
-      await db.close();
+      db.close();
     }
   } catch (error) {
     console.error('投稿削除エラー:', error);

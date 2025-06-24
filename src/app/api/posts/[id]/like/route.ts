@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface UserRecord {
+  id: number;
+}
+
+interface LikeRecord {
+  id: number;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,7 +33,7 @@ export async function POST(
       const user = db.get(
         'SELECT id FROM users WHERE username = ?',
         session.user.name
-      ) as { id: number } | undefined;
+      ) as UserRecord | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -37,7 +46,7 @@ export async function POST(
       const existingLike = db.get(
         'SELECT id FROM likes WHERE user_id = ? AND post_id = ?',
         user.id, postId
-      );
+      ) as LikeRecord | undefined;
 
       if (existingLike) {
         // いいねを削除（取り消し）

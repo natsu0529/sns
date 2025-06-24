@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface ReplyRecord {
+  id: number;
+  content: string;
+  created_at: string;
+  username: string;
+}
+
+interface UserRecord {
+  id: number;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +34,7 @@ export async function GET(
       JOIN users u ON r.user_id = u.id
       WHERE r.post_id = ?
       ORDER BY r.created_at ASC
-    `, postId);
+    `, postId) as ReplyRecord[];
 
     return NextResponse.json(replies);
   } catch (error) {
@@ -49,7 +61,7 @@ export async function POST(
       );
     }
 
-    const { content } = await request.json();
+    const { content }: { content: string } = await request.json();
     const resolvedParams = await params;
     const postId = resolvedParams.id;
 
@@ -73,7 +85,7 @@ export async function POST(
       const user = db.get(
         'SELECT id FROM users WHERE username = ?',
         session.user.name
-      ) as { id: number } | undefined;
+      ) as UserRecord | undefined;
 
       if (!user) {
         return NextResponse.json(

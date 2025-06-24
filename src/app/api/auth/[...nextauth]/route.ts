@@ -3,6 +3,18 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import DatabaseManager from '@/lib/database';
 
+// 型定義
+interface UserRecord {
+  id: number;
+  username: string;
+  password: string;
+}
+
+interface ExtendedUser {
+  id: string;
+  name: string;
+}
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -11,7 +23,7 @@ const handler = NextAuth({
         username: { label: 'ユーザー名', type: 'text' },
         password: { label: 'パスワード', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<ExtendedUser | null> {
         if (!credentials?.username || !credentials?.password) {
           return null;
         }
@@ -21,7 +33,7 @@ const handler = NextAuth({
           const user = db.get(
             'SELECT * FROM users WHERE username = ?',
             credentials.username
-          ) as { id: number; username: string; password: string } | undefined;
+          ) as UserRecord | undefined;
 
           if (user && await bcrypt.compare(credentials.password, user.password)) {
             return {
@@ -43,11 +55,11 @@ const handler = NextAuth({
     signIn: '/auth/signin',
   },
   callbacks: {
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
       if (token.sub && session.user) {
         // ユーザーIDをセッションに追加
-        const userWithId = session.user as { id?: string; name?: string | null; email?: string | null };
-        userWithId.id = token.sub;
+        session.user.id = token.sub;
       }
       return session;
     },
