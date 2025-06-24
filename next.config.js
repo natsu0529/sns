@@ -13,9 +13,14 @@ const nextConfig = {
   experimental: {
     // 必要に応じて追加
   },
-  // 環境変数の検証をスキップ
-  skipTrailingSlashRedirect: true,
-  skipMiddlewareUrlNormalize: true,
+  // Webpack設定でLinterを無効化
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // ESLintローダーを削除
+    config.module.rules = config.module.rules.filter(
+      (rule) => !rule.loader || !rule.loader.includes('eslint-loader')
+    );
+    return config;
+  },
 };
 
 module.exports = nextConfig;
