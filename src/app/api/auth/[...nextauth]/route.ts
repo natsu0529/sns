@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
@@ -47,7 +46,8 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token.sub && session.user) {
         // ユーザーIDをセッションに追加
-        (session.user as any).id = token.sub;
+        const userWithId = session.user as { id?: string; name?: string | null; email?: string | null };
+        userWithId.id = token.sub;
       }
       return session;
     },

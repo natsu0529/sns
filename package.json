@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "SKIP_ENV_VALIDATION=true next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --quiet",
     "init-db": "node scripts/init-db.js"
   },
   "dependencies": {

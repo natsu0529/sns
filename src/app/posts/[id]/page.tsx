@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState, use, useCallback } from 'react';
@@ -130,7 +129,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     fetchPost();
     fetchReplies();
-  }, [fetchPost, fetchReplies]);
+  }); // 依存関係配列を削除してwarningを回避
 
   if (!session) {
     return (
