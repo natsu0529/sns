@@ -45,6 +45,7 @@ const handler = NextAuth({
   callbacks: {
     async session({ session, token }) {
       if (token.sub && session.user) {
+        // ユーザーIDをセッションに追加
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).id = token.sub;
       }

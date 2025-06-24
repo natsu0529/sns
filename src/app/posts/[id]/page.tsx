@@ -129,7 +129,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     fetchPost();
     fetchReplies();
-  }, [resolvedParams.id]);
+  }, [fetchPost, fetchReplies]);
 
   if (!session) {
     return (
