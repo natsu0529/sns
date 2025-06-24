@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new Database();
+    const db = new DatabaseManager();
     try {
       // ユーザー名の重複チェック
-      const existingUser = await db.get(
+      const existingUser = db.get(
         'SELECT id FROM users WHERE username = ?',
-        [username]
+        username
       );
 
       if (existingUser) {
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // ユーザーを作成
-      await db.run(
+      db.run(
         'INSERT INTO users (username, password) VALUES (?, ?)',
-        [username, hashedPassword]
+        username, hashedPassword
       );
 
       return NextResponse.json(

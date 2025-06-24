@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -30,7 +30,8 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
   const [newReply, setNewReply] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fetchPost = async () => {
+  // 投稿を取得
+  const fetchPost = useCallback(async () => {
     try {
       const response = await fetch('/api/posts');
       if (response.ok) {
@@ -41,9 +42,9 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
     } catch (error) {
       console.error('投稿取得エラー:', error);
     }
-  };
+  }, [resolvedParams.id]);
 
-  const fetchReplies = async () => {
+  const fetchReplies = useCallback(async () => {
     try {
       const response = await fetch(`/api/posts/${resolvedParams.id}/replies`);
       if (response.ok) {
@@ -53,7 +54,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
     } catch (error) {
       console.error('返信取得エラー:', error);
     }
-  };
+  }, [resolvedParams.id]);
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
