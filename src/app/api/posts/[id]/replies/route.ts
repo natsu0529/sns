@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 export async function GET(
   request: NextRequest,
@@ -8,11 +8,11 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   const postId = resolvedParams.id;
-  const db = new Database();
+  const db = new DatabaseManager();
 
   try {
     // 返信を取得
-    const replies = await db.all(`
+    const replies = db.all(`
       SELECT 
         r.id,
         r.content,
@@ -22,7 +22,7 @@ export async function GET(
       JOIN users u ON r.user_id = u.id
       WHERE r.post_id = ?
       ORDER BY r.created_at ASC
-    `, [postId]);
+    `, postId);
 
     return NextResponse.json(replies);
   } catch (error) {
@@ -67,13 +67,13 @@ export async function POST(
       );
     }
 
-    const db = new Database();
+    const db = new DatabaseManager();
     try {
       // ユーザーIDを取得
-      const user = await db.get(
+      const user = db.get(
         'SELECT id FROM users WHERE username = ?',
-        [session.user.name]
-      );
+        session.user.name
+      ) as { id: number } | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -83,9 +83,9 @@ export async function POST(
       }
 
       // 返信を作成
-      await db.run(
+      db.run(
         'INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)',
-        [user.id, postId, content.trim()]
+        user.id, postId, content.trim()
       );
 
       return NextResponse.json(

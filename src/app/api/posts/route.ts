@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 export async function GET() {
-  const db = new Database();
+  const db = new DatabaseManager();
   try {
     // 投稿を取得（ユーザー名、いいね数、返信数を含む）
-    const posts = await db.all(`
+    const posts = db.all(`
       SELECT 
         p.id,
         p.content,
@@ -60,13 +60,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new Database();
+    const db = new DatabaseManager();
     try {
       // ユーザーIDを取得
-      const user = await db.get(
+      const user = db.get(
         'SELECT id FROM users WHERE username = ?',
-        [session.user.name]
-      );
+        session.user.name
+      ) as { id: number } | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
       }
 
       // 投稿を作成
-      await db.run(
+      db.run(
         'INSERT INTO posts (user_id, content) VALUES (?, ?)',
-        [user.id, content.trim()]
+        user.id, content.trim()
       );
 
       return NextResponse.json(

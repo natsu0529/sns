@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 export async function POST(
   request: NextRequest,
@@ -17,14 +17,14 @@ export async function POST(
 
     const resolvedParams = await params;
     const postId = resolvedParams.id;
-    const db = new Database();
+    const db = new DatabaseManager();
 
     try {
       // ユーザーIDを取得
-      const user = await db.get(
+      const user = db.get(
         'SELECT id FROM users WHERE username = ?',
-        [session.user.name]
-      );
+        session.user.name
+      ) as { id: number } | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -34,23 +34,23 @@ export async function POST(
       }
 
       // 既にいいねしているかチェック
-      const existingLike = await db.get(
+      const existingLike = db.get(
         'SELECT id FROM likes WHERE user_id = ? AND post_id = ?',
-        [user.id, postId]
+        user.id, postId
       );
 
       if (existingLike) {
         // いいねを削除（取り消し）
-        await db.run(
+        db.run(
           'DELETE FROM likes WHERE user_id = ? AND post_id = ?',
-          [user.id, postId]
+          user.id, postId
         );
         return NextResponse.json({ message: 'いいねを取り消しました', liked: false });
       } else {
         // いいねを追加
-        await db.run(
+        db.run(
           'INSERT INTO likes (user_id, post_id) VALUES (?, ?)',
-          [user.id, postId]
+          user.id, postId
         );
         return NextResponse.json({ message: 'いいねしました', liked: true });
       }

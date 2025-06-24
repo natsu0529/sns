@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 const handler = NextAuth({
   providers: [
@@ -16,12 +16,12 @@ const handler = NextAuth({
           return null;
         }
 
-        const db = new Database();
+        const db = new DatabaseManager();
         try {
-          const user = await db.get(
+          const user = db.get(
             'SELECT * FROM users WHERE username = ?',
-            [credentials.username]
-          );
+            credentials.username
+          ) as { id: number; username: string; password: string } | undefined;
 
           if (user && await bcrypt.compare(credentials.password, user.password)) {
             return {

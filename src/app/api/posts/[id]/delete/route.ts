@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import Database from '@/lib/database';
+import DatabaseManager from '@/lib/database';
 
 export async function DELETE(
   request: NextRequest,
@@ -17,14 +17,14 @@ export async function DELETE(
 
     const resolvedParams = await params;
     const postId = resolvedParams.id;
-    const db = new Database();
+    const db = new DatabaseManager();
 
     try {
       // ユーザーIDを取得
-      const user = await db.get(
+      const user = db.get(
         'SELECT id FROM users WHERE username = ?',
-        [session.user.name]
-      );
+        session.user.name
+      ) as { id: number } | undefined;
 
       if (!user) {
         return NextResponse.json(
@@ -34,10 +34,10 @@ export async function DELETE(
       }
 
       // 投稿の所有者確認
-      const post = await db.get(
+      const post = db.get(
         'SELECT user_id FROM posts WHERE id = ?',
-        [postId]
-      );
+        postId
+      ) as { user_id: number } | undefined;
 
       if (!post) {
         return NextResponse.json(
@@ -55,13 +55,13 @@ export async function DELETE(
 
       // 関連データを削除（外部キー制約のため順序重要）
       // 1. 返信を削除
-      await db.run('DELETE FROM replies WHERE post_id = ?', [postId]);
+      db.run('DELETE FROM replies WHERE post_id = ?', postId);
       
       // 2. いいねを削除
-      await db.run('DELETE FROM likes WHERE post_id = ?', [postId]);
+      db.run('DELETE FROM likes WHERE post_id = ?', postId);
       
       // 3. 投稿を削除
-      await db.run('DELETE FROM posts WHERE id = ?', [postId]);
+      db.run('DELETE FROM posts WHERE id = ?', postId);
 
       return NextResponse.json(
         { message: '投稿が削除されました' },
