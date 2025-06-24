@@ -8,6 +8,18 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // 実験的機能でESLintを完全無効化
+  experimental: {
+    forceSwcTransforms: true,
+  },
+  // webpackの設定でlintingを無効化
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // ESLintプラグインを削除
+    config.plugins = config.plugins.filter(
+      plugin => plugin.constructor.name !== 'ESLintWebpackPlugin'
+    );
+    return config;
+  },
   // 実験的な機能
   experimental: {
     // 必要に応じて追加

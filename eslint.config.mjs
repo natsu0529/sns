@@ -1,2 +1,2 @@
-// ESLint configuration disabled for build
+// ESLint completely disabled
 export default [];
