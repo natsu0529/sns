@@ -14,17 +14,20 @@ class DatabaseManager {
   }
 
   // クエリ実行
-  run(sql: string, ...params: unknown[]): Database.RunResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  run(sql: string, ...params: any[]): Database.RunResult {
     return this.db.prepare(sql).run(...params);
   }
 
   // 単一行取得
-  get(sql: string, ...params: unknown[]): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get(sql: string, ...params: any[]): any {
     return this.db.prepare(sql).get(...params);
   }
 
   // 複数行取得
-  all(sql: string, ...params: unknown[]): unknown[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  all(sql: string, ...params: any[]): any[] {
     return this.db.prepare(sql).all(...params);
   }
 
