@@ -1,10 +1,10 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-// Vercel環境ではメモリ内データベースを使用
-const DATABASE_PATH = process.env.NODE_ENV === 'production' 
+// ローカル開発ではsns.db、Vercel環境のみメモリ内データベース
+const DATABASE_PATH = process.env.VERCEL 
   ? ':memory:' 
-  : path.join(process.cwd(), 'sns.db');
+  : './sns.db';
 
 // データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
@@ -12,11 +12,20 @@ class DatabaseManager {
   private db: Database.Database;
 
   private constructor() {
+    console.log('=== DatabaseManager 初期化 ===');
+    console.log('DATABASE_PATH:', DATABASE_PATH);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('VERCEL:', process.env.VERCEL);
+    
     this.db = new Database(DATABASE_PATH);
     this.db.pragma('journal_mode = WAL');
-    // 本番環境では自動的にテーブルを初期化
-    if (process.env.NODE_ENV === 'production') {
+    
+    // Vercel環境では自動的にテーブルを初期化
+    if (process.env.VERCEL) {
+      console.log('Vercel環境: テーブルを初期化中...');
       this.initializeTables();
+    } else {
+      console.log('ローカル環境: 既存のデータベースファイルを使用');
     }
   }
 

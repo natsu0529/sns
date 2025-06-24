@@ -38,6 +38,12 @@ const handler = NextAuth({
         const db = DatabaseManager.getInstance();
         try {
           console.log('データベースからユーザー検索:', credentials.username);
+          console.log('データベース接続確認');
+          
+          // デバッグ: 全ユーザー一覧を取得
+          const allUsers = db.all('SELECT id, username FROM users');
+          console.log('データベース内の全ユーザー:', allUsers);
+          
           const user = db.get(
             'SELECT * FROM users WHERE username = ?',
             credentials.username
