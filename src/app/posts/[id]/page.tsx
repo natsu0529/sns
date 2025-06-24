@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,9 +21,10 @@ interface Reply {
   username: string;
 }
 
-export default function PostDetail({ params }: { params: { id: string } }) {
+export default function PostDetail({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const resolvedParams = use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [newReply, setNewReply] = useState('');
@@ -34,7 +35,7 @@ export default function PostDetail({ params }: { params: { id: string } }) {
       const response = await fetch('/api/posts');
       if (response.ok) {
         const posts = await response.json();
-        const currentPost = posts.find((p: Post) => p.id === parseInt(params.id));
+        const currentPost = posts.find((p: Post) => p.id === parseInt(resolvedParams.id));
         setPost(currentPost || null);
       }
     } catch (error) {
@@ -44,7 +45,7 @@ export default function PostDetail({ params }: { params: { id: string } }) {
 
   const fetchReplies = async () => {
     try {
-      const response = await fetch(`/api/posts/${params.id}/replies`);
+      const response = await fetch(`/api/posts/${resolvedParams.id}/replies`);
       if (response.ok) {
         const data = await response.json();
         setReplies(data);
@@ -60,7 +61,7 @@ export default function PostDetail({ params }: { params: { id: string } }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/posts/${params.id}/replies`, {
+      const response = await fetch(`/api/posts/${resolvedParams.id}/replies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,10 +101,34 @@ export default function PostDetail({ params }: { params: { id: string } }) {
     }
   };
 
+  // 投稿削除機能
+  const handleDelete = async () => {
+    if (!post || !window.confirm('この投稿を削除しますか？')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/posts/${post.id}/delete`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        alert('投稿が削除されました');
+        router.push('/'); // メインページにリダイレクト
+      } else {
+        const error = await response.json();
+        alert(error.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
   useEffect(() => {
     fetchPost();
     fetchReplies();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (!session) {
     return (
@@ -146,9 +171,21 @@ export default function PostDetail({ params }: { params: { id: string } }) {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="flex justify-between items-start mb-3">
             <span className="font-medium text-gray-900 text-lg">@{post.username}</span>
-            <span className="text-sm text-gray-500">
-              {new Date(post.created_at).toLocaleString('ja-JP')}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">
+                {new Date(post.created_at).toLocaleString('ja-JP')}
+              </span>
+              {/* 自分の投稿の場合のみ削除ボタンを表示 */}
+              {post.username === session?.user?.name && (
+                <button
+                  onClick={handleDelete}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                  title="投稿を削除"
+                >
+                  🗑️
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-gray-800 text-lg mb-4">{post.content}</p>
           <div className="flex items-center space-x-6 text-sm text-gray-500 border-t pt-3">

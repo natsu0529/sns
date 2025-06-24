@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import Database from '@/lib/database';
 
-export async function POST(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -33,33 +33,46 @@ export async function POST(
         );
       }
 
-      // 既にいいねしているかチェック
-      const existingLike = await db.get(
-        'SELECT id FROM likes WHERE user_id = ? AND post_id = ?',
-        [user.id, postId]
+      // 投稿の所有者確認
+      const post = await db.get(
+        'SELECT user_id FROM posts WHERE id = ?',
+        [postId]
       );
 
-      if (existingLike) {
-        // いいねを削除（取り消し）
-        await db.run(
-          'DELETE FROM likes WHERE user_id = ? AND post_id = ?',
-          [user.id, postId]
+      if (!post) {
+        return NextResponse.json(
+          { error: '投稿が見つかりません' },
+          { status: 404 }
         );
-        return NextResponse.json({ message: 'いいねを取り消しました', liked: false });
-      } else {
-        // いいねを追加
-        await db.run(
-          'INSERT INTO likes (user_id, post_id) VALUES (?, ?)',
-          [user.id, postId]
-        );
-        return NextResponse.json({ message: 'いいねしました', liked: true });
       }
 
+      if (post.user_id !== user.id) {
+        return NextResponse.json(
+          { error: '自分の投稿のみ削除できます' },
+          { status: 403 }
+        );
+      }
+
+      // 関連データを削除（外部キー制約のため順序重要）
+      // 1. 返信を削除
+      await db.run('DELETE FROM replies WHERE post_id = ?', [postId]);
+      
+      // 2. いいねを削除
+      await db.run('DELETE FROM likes WHERE post_id = ?', [postId]);
+      
+      // 3. 投稿を削除
+      await db.run('DELETE FROM posts WHERE id = ?', [postId]);
+
+      return NextResponse.json(
+        { message: '投稿が削除されました' },
+        { status: 200 }
+      );
+
     } finally {
-      db.close();
+      await db.close();
     }
   } catch (error) {
-    console.error('いいねエラー:', error);
+    console.error('投稿削除エラー:', error);
     return NextResponse.json(
       { error: 'サーバーエラーが発生しました' },
       { status: 500 }

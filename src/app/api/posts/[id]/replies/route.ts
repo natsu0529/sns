@@ -4,9 +4,10 @@ import Database from '@/lib/database';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const postId = params.id;
+  const resolvedParams = await params;
+  const postId = resolvedParams.id;
   const db = new Database();
 
   try {
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -49,7 +50,8 @@ export async function POST(
     }
 
     const { content } = await request.json();
-    const postId = params.id;
+    const resolvedParams = await params;
+    const postId = resolvedParams.id;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(

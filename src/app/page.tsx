@@ -77,6 +77,30 @@ export default function Home() {
     }
   };
 
+  // 投稿削除機能
+  const handleDelete = async (postId: number) => {
+    if (!window.confirm('この投稿を削除しますか？')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/delete`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        fetchPosts(); // 投稿一覧を再読み込み
+        alert('投稿が削除されました');
+      } else {
+        const error = await response.json();
+        alert(error.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -167,9 +191,21 @@ export default function Home() {
             <div key={post.id} className="bg-white rounded-lg shadow-sm border p-4">
               <div className="flex justify-between items-start mb-2">
                 <span className="font-medium text-gray-900">@{post.username}</span>
-                <span className="text-sm text-gray-500">
-                  {new Date(post.created_at).toLocaleString('ja-JP')}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">
+                    {new Date(post.created_at).toLocaleString('ja-JP')}
+                  </span>
+                  {/* 自分の投稿の場合のみ削除ボタンを表示 */}
+                  {post.username === session.user?.name && (
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="text-red-500 hover:text-red-700 text-sm"
+                      title="投稿を削除"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="text-gray-800 mb-3">{post.content}</p>
               <div className="flex items-center space-x-6 text-sm text-gray-500">
