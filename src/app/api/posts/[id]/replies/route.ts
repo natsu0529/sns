@@ -20,7 +20,7 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   const postId = resolvedParams.id;
-  const db = new DatabaseManager();
+  const db = DatabaseManager.getInstance();
 
   try {
     // 返信を取得
@@ -43,9 +43,6 @@ export async function GET(
       { error: 'サーバーエラーが発生しました' },
       { status: 500 }
     );
-  } finally {
-    db.close();
-  }
 }
 
 export async function POST(
@@ -79,7 +76,7 @@ export async function POST(
       );
     }
 
-    const db = new DatabaseManager();
+    const db = DatabaseManager.getInstance();
     try {
       // ユーザーIDを取得
       const user = db.get(
@@ -105,9 +102,6 @@ export async function POST(
         { status: 201 }
       );
 
-    } finally {
-      db.close();
-    }
   } catch (error) {
     console.error('返信作成エラー:', error);
     return NextResponse.json(

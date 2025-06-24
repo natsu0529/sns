@@ -26,7 +26,7 @@ export async function POST(
 
     const resolvedParams = await params;
     const postId = resolvedParams.id;
-    const db = new DatabaseManager();
+    const db = DatabaseManager.getInstance();
 
     try {
       // ユーザーIDを取得
@@ -64,9 +64,6 @@ export async function POST(
         return NextResponse.json({ message: 'いいねしました', liked: true });
       }
 
-    } finally {
-      db.close();
-    }
   } catch (error) {
     console.error('いいねエラー:', error);
     return NextResponse.json(

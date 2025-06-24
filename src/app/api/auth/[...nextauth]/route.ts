@@ -28,7 +28,7 @@ const handler = NextAuth({
           return null;
         }
 
-        const db = new DatabaseManager();
+        const db = DatabaseManager.getInstance();
         try {
           const user = db.get(
             'SELECT * FROM users WHERE username = ?',
@@ -45,9 +45,8 @@ const handler = NextAuth({
         } catch (error) {
           console.error('認証エラー:', error);
           return null;
-        } finally {
-          db.close();
         }
+        // Note: シングルトンパターンなのでcloseしない
       }
     })
   ],

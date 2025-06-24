@@ -6,17 +6,26 @@ const DATABASE_PATH = process.env.NODE_ENV === 'production'
   ? ':memory:' 
   : path.join(process.cwd(), 'sns.db');
 
-// データベース接続クラス
+// データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
+  private static instance: DatabaseManager;
   private db: Database.Database;
 
-  constructor() {
+  private constructor() {
     this.db = new Database(DATABASE_PATH);
     this.db.pragma('journal_mode = WAL');
     // 本番環境では自動的にテーブルを初期化
     if (process.env.NODE_ENV === 'production') {
       this.initializeTables();
     }
+  }
+
+  // シングルトンインスタンスを取得
+  public static getInstance(): DatabaseManager {
+    if (!DatabaseManager.instance) {
+      DatabaseManager.instance = new DatabaseManager();
+    }
+    return DatabaseManager.instance;
   }
 
   // クエリ実行

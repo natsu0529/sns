@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new DatabaseManager();
+    const db = DatabaseManager.getInstance();
     try {
       // ユーザー名の重複チェック
       const existingUser = db.get(
@@ -55,9 +55,14 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
 
-    } finally {
-      db.close();
+    } catch (error) {
+      console.error('ユーザー登録中にエラーが発生:', error);
+      return NextResponse.json(
+        { error: 'ユーザー登録に失敗しました' },
+        { status: 500 }
+      );
     }
+    // Note: シングルトンパターンなのでcloseしない
   } catch (error) {
     console.error('ユーザー登録エラー:', error);
     return NextResponse.json(

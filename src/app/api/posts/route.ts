@@ -17,7 +17,7 @@ interface UserRecord {
 }
 
 export async function GET() {
-  const db = new DatabaseManager();
+  const db = DatabaseManager.getInstance();
   try {
     // 投稿を取得（ユーザー名、いいね数、返信数を含む）
     const posts = db.all(`
@@ -43,9 +43,6 @@ export async function GET() {
       { error: 'サーバーエラーが発生しました' },
       { status: 500 }
     );
-  } finally {
-    db.close();
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -74,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new DatabaseManager();
+    const db = DatabaseManager.getInstance();
     try {
       // ユーザーIDを取得
       const user = db.get(
@@ -100,9 +97,6 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
 
-    } finally {
-      db.close();
-    }
   } catch (error) {
     console.error('投稿作成エラー:', error);
     return NextResponse.json(
