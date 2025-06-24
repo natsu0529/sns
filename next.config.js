@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ESLintエラーでビルドを停止しない
+  // ESLintを完全に無効化
   eslint: {
     ignoreDuringBuilds: true,
-    dirs: [], // ESLintを完全に無効化
   },
   // TypeScriptエラーでビルドを停止しない
   typescript: {
