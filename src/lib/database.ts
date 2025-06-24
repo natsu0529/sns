@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Database from 'better-sqlite3';
 import path from 'path';
 
@@ -14,20 +13,17 @@ class DatabaseManager {
   }
 
   // クエリ実行
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  run(sql: string, ...params: any[]): Database.RunResult {
+  run(sql: string, ...params: unknown[]): Database.RunResult {
     return this.db.prepare(sql).run(...params);
   }
 
   // 単一行取得
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get(sql: string, ...params: any[]): any {
+  get(sql: string, ...params: unknown[]): unknown {
     return this.db.prepare(sql).get(...params);
   }
 
   // 複数行取得
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  all(sql: string, ...params: any[]): any[] {
+  all(sql: string, ...params: unknown[]): unknown[] {
     return this.db.prepare(sql).all(...params);
   }
 

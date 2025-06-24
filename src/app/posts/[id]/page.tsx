@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState, use } from 'react';
@@ -60,7 +58,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
 
     fetchPost();
     fetchReplies();
-  }, [resolvedParams.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to run only once
 
   if (!session) {
     return (
