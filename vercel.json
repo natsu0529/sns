@@ -2,7 +2,6 @@
   "buildCommand": "SKIP_LINT=true npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "nodeVersion": "18.x",
   "env": {
     "SKIP_LINT": "true"
   }
