@@ -17,11 +17,9 @@ class DatabaseManager {
     this.db = new Database(DATABASE_PATH);
     this.db.pragma('journal_mode = WAL');
     
-    // Vercel環境では自動的にテーブルを初期化
-    if (process.env.VERCEL) {
-      console.log('Vercel環境: テーブル初期化中');
-      this.initializeTables();
-    }
+    // すべての環境でテーブルを初期化
+    console.log('テーブル初期化中');
+    this.initializeTables();
   }
 
   // シングルトンインスタンスを取得

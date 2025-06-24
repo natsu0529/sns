@@ -1,0 +1,72 @@
+
+> sns@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.11.5:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1176ms
+ ○ Compiling /api/posts ...
+ ✓ Compiled /api/posts in 687ms (347 modules)
+ ⨯ No HTTP methods exported in '/Users/natsus/Desktop/sns/src/app/api/posts/route.ts'. Export a named export for each HTTP method.
+ GET /api/posts 405 in 785ms
+ ✓ Compiled in 17ms
+ ✓ Compiled /api/posts in 487ms (320 modules)
+DatabaseManager初期化: ./sns.db
+テーブル初期化中
+Production database tables initialized successfully
+ GET /api/posts 200 in 563ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1611ms (1112 modules)
+ GET / 200 in 1727ms
+ ✓ Compiled /api/auth/register in 79ms (1082 modules)
+DatabaseManager初期化: ./sns.db
+テーブル初期化中
+Production database tables initialized successfully
+ POST /api/auth/register 409 in 103ms
+ GET /?id=aeea28e2-e3e8-4a73-8392-e5e310defd80&vscodeBrowserReqId=1750791369267 200 in 137ms
+ GET /api/posts 200 in 67ms
+ ✓ Compiled /api/auth/[...nextauth] in 179ms (1084 modules)
+[next-auth][warn][DEBUG_ENABLED] 
+https://next-auth.js.org/warnings#debug_enabled
+ GET /api/auth/session 200 in 759ms
+ ✓ Compiled /auth/signin in 165ms (1093 modules)
+ GET /auth/signin 200 in 249ms
+[next-auth][warn][DEBUG_ENABLED] 
+https://next-auth.js.org/warnings#debug_enabled
+ GET /api/auth/providers 200 in 41ms
+ GET /api/auth/csrf 200 in 3ms
+ POST /api/auth/callback/credentials 200 in 3ms
+ GET /api/auth/session 200 in 2ms
+ GET /api/auth/session 200 in 2ms
+ GET /api/auth/providers 200 in 6ms
+ GET /api/auth/csrf 200 in 5ms
+ POST /api/auth/callback/credentials 200 in 4ms
+ GET /api/auth/session 200 in 5ms
+ GET /api/auth/session 200 in 3ms
+ GET /api/auth/providers 200 in 8ms
+ GET /api/auth/csrf 200 in 4ms
+ POST /api/auth/callback/credentials 200 in 3ms
+ GET /api/auth/session 200 in 3ms
+ GET /api/auth/session 200 in 3ms
+ GET /api/auth/providers 200 in 3ms
+ GET /api/auth/csrf 200 in 2ms
+ POST /api/auth/callback/credentials 200 in 2ms
+ GET /api/auth/session 200 in 2ms
+ GET /api/auth/session 200 in 1ms
+ GET /api/auth/register 405 in 23ms
+ GET /api/auth/register 405 in 5ms
+DatabaseManager初期化: ./sns.db
+テーブル初期化中
+Production database tables initialized successfully
+ POST /api/auth/register 201 in 272ms
+ GET /api/auth/providers 200 in 14ms
+ GET /api/auth/csrf 200 in 3ms
+ POST /api/auth/callback/credentials 200 in 4ms
+ GET /api/auth/session 200 in 3ms
+ GET /api/auth/session 200 in 2ms
+ ✓ Compiled in 96ms (374 modules)
+ GET /auth/signin 200 in 14ms
