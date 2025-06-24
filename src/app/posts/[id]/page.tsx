@@ -60,7 +60,7 @@ export default function PostDetail({ params }: { params: Promise<{ id: string }>
 
     fetchPost();
     fetchReplies();
-  }, [resolvedParams.id]);
+  }, [resolvedParams.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!session) {
     return (

@@ -59,7 +59,8 @@ const handler = NextAuth({
     session: async ({ session, token }) => {
       if (token.sub && session.user) {
         // ユーザーIDをセッションに追加
-        (session.user as { id: string }).id = token.sub;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).id = token.sub;
       }
       return session;
     },

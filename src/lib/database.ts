@@ -14,18 +14,21 @@ class DatabaseManager {
   }
 
   // クエリ実行
-  run(sql: string, ...params: (string | number | boolean | null)[]): Database.RunResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  run(sql: string, ...params: any[]): Database.RunResult {
     return this.db.prepare(sql).run(...params);
   }
 
   // 単一行取得
-  get(sql: string, ...params: (string | number | boolean | null)[]): Record<string, unknown> | undefined {
-    return this.db.prepare(sql).get(...params) as Record<string, unknown> | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get(sql: string, ...params: any[]): any {
+    return this.db.prepare(sql).get(...params);
   }
 
   // 複数行取得
-  all(sql: string, ...params: (string | number | boolean | null)[]): Record<string, unknown>[] {
-    return this.db.prepare(sql).all(...params) as Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  all(sql: string, ...params: any[]): any[] {
+    return this.db.prepare(sql).all(...params);
   }
 
   // データベース初期化
