@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Database from 'better-sqlite3';
 import path from 'path';
 
@@ -8,24 +9,23 @@ class DatabaseManager {
   private db: Database.Database;
 
   constructor() {
-    const db = new Database(DATABASE_PATH);
-    this.db = db;
+    this.db = new Database(DATABASE_PATH);
     this.db.pragma('journal_mode = WAL');
   }
 
   // クエリ実行
-  run(sql: string, ...params: unknown[]): Database.RunResult {
+  run(sql: string, ...params: (string | number | boolean | null)[]): Database.RunResult {
     return this.db.prepare(sql).run(...params);
   }
 
   // 単一行取得
-  get(sql: string, ...params: unknown[]): unknown {
-    return this.db.prepare(sql).get(...params);
+  get(sql: string, ...params: (string | number | boolean | null)[]): Record<string, unknown> | undefined {
+    return this.db.prepare(sql).get(...params) as Record<string, unknown> | undefined;
   }
 
   // 複数行取得
-  all(sql: string, ...params: unknown[]): unknown[] {
-    return this.db.prepare(sql).all(...params);
+  all(sql: string, ...params: (string | number | boolean | null)[]): Record<string, unknown>[] {
+    return this.db.prepare(sql).all(...params) as Record<string, unknown>[];
   }
 
   // データベース初期化
