@@ -86,3 +86,22 @@ Production database tables initialized successfully
  ✓ Compiled in 82ms (374 modules)
  ✓ Compiled in 82ms (374 modules)
  ✓ Compiled in 56ms (374 modules)
+ ✓ Compiled /api/auth/[...nextauth] in 484ms (744 modules)
+[next-auth][warn][DEBUG_ENABLED] 
+https://next-auth.js.org/warnings#debug_enabled
+ GET /api/auth/session 200 in 650ms
+ GET /api/auth/session 200 in 11ms
+ GET /api/auth/session 200 in 26ms
+ GET /api/auth/session 200 in 40ms
+ ✓ Compiled /api/auth/register in 347ms (531 modules)
+SQLite使用中: ./sns.db
+テーブル初期化中
+SQLite tables initialized successfully
+ POST /api/auth/register 201 in 709ms
+ ✓ Compiled in 117ms (374 modules)
+ ✓ Compiled in 185ms (905 modules)
+ ✓ Compiled in 230ms (851 modules)
+ ✓ Compiled in 50ms (374 modules)
+ ✓ Compiled in 56ms (374 modules)
+ ✓ Compiled in 97ms (374 modules)
+ ✓ Compiled in 90ms (374 modules)
