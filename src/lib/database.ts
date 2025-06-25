@@ -4,7 +4,8 @@ import { Pool } from 'pg';
 // Vercel環境ではPostgreSQL、ローカルではSQLite
 const isVercel = !!process.env.VERCEL;
 const hasDatabase = !!process.env.DATABASE_URL || !!process.env.POSTGRES_URL;
-const isPostgres = isVercel && hasDatabase;
+// 一時的にPostgreSQLを無効化してテスト
+const isPostgres = false; // isVercel && hasDatabase;
 
 // データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
