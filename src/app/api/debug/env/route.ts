@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
   const envInfo = {
     NODE_ENV: process.env.NODE_ENV,
     VERCEL: !!process.env.VERCEL,
+    DATABASE_URL: !!process.env.DATABASE_URL,
+    DATABASE_URL_EXISTS: process.env.DATABASE_URL ? 'YES' : 'NO',
+    DATABASE_URL_LENGTH: process.env.DATABASE_URL?.length || 0,
     POSTGRES_URL: !!process.env.POSTGRES_URL,
     POSTGRES_URL_EXISTS: process.env.POSTGRES_URL ? 'YES' : 'NO',
     POSTGRES_URL_LENGTH: process.env.POSTGRES_URL?.length || 0,

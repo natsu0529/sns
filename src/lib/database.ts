@@ -1,14 +1,16 @@
 import Database from 'better-sqlite3';
 import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 
 // Vercel環境ではPostgreSQL、ローカルではSQLite
 const isVercel = !!process.env.VERCEL;
-const isPostgres = !!process.env.POSTGRES_URL;
+const isPostgres = !!process.env.DATABASE_URL || !!process.env.POSTGRES_URL;
 
 // データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
   private static instance: DatabaseManager;
   private db?: Database.Database;
+  private pgPool?: Pool;
   private isPostgres: boolean;
   private initialized: boolean = false;
   private initializationPromise?: Promise<void>;
@@ -19,10 +21,19 @@ class DatabaseManager {
     console.log('=== DatabaseManager 初期化 ===');
     console.log('isVercel:', isVercel);
     console.log('isPostgres:', isPostgres);
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
     console.log('POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
     
     if (this.isPostgres) {
       console.log('PostgreSQL使用中 (Vercel環境)');
+      // PostgreSQL接続プールを作成
+      const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+      if (dbUrl) {
+        this.pgPool = new Pool({
+          connectionString: dbUrl,
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        });
+      }
       // PostgreSQLの場合は非同期で初期化
       this.initializationPromise = this.initializeTablesAsync();
     } else {
@@ -55,12 +66,18 @@ class DatabaseManager {
   async run(sqlQuery: string, ...params: unknown[]): Promise<any> {
     await this.ensureInitialized();
     
-    if (this.isPostgres) {
+    if (this.isPostgres && this.pgPool) {
       // PostgreSQLの場合、$1, $2, $3...形式に変換
       let paramIndex = 1;
       const pgQuery = sqlQuery.replace(/\?/g, () => `$${paramIndex++}`);
       console.log('PostgreSQL Query:', pgQuery, 'Params:', params);
-      return await sql.query(pgQuery, params);
+      const client = await this.pgPool.connect();
+      try {
+        const result = await client.query(pgQuery, params);
+        return result;
+      } finally {
+        client.release();
+      }
     } else {
       return this.db!.prepare(sqlQuery).run(...params);
     }
@@ -70,13 +87,18 @@ class DatabaseManager {
   async get(sqlQuery: string, ...params: unknown[]): Promise<unknown> {
     await this.ensureInitialized();
     
-    if (this.isPostgres) {
+    if (this.isPostgres && this.pgPool) {
       // PostgreSQLの場合、$1, $2, $3...形式に変換
       let paramIndex = 1;
       const pgQuery = sqlQuery.replace(/\?/g, () => `$${paramIndex++}`);
       console.log('PostgreSQL Query:', pgQuery, 'Params:', params);
-      const result = await sql.query(pgQuery, params);
-      return result.rows[0];
+      const client = await this.pgPool.connect();
+      try {
+        const result = await client.query(pgQuery, params);
+        return result.rows[0];
+      } finally {
+        client.release();
+      }
     } else {
       return this.db!.prepare(sqlQuery).get(...params);
     }
@@ -86,13 +108,18 @@ class DatabaseManager {
   async all(sqlQuery: string, ...params: unknown[]): Promise<unknown[]> {
     await this.ensureInitialized();
     
-    if (this.isPostgres) {
+    if (this.isPostgres && this.pgPool) {
       // PostgreSQLの場合、$1, $2, $3...形式に変換
       let paramIndex = 1;
       const pgQuery = sqlQuery.replace(/\?/g, () => `$${paramIndex++}`);
       console.log('PostgreSQL Query:', pgQuery, 'Params:', params);
-      const result = await sql.query(pgQuery, params);
-      return result.rows;
+      const client = await this.pgPool.connect();
+      try {
+        const result = await client.query(pgQuery, params);
+        return result.rows;
+      } finally {
+        client.release();
+      }
     } else {
       return this.db!.prepare(sqlQuery).all(...params);
     }
@@ -104,55 +131,65 @@ class DatabaseManager {
       console.log('PostgreSQLテーブル初期化中...');
       
       // 環境変数の確認
-      if (!process.env.POSTGRES_URL) {
-        throw new Error('POSTGRES_URL環境変数が設定されていません');
+      const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+      if (!dbUrl) {
+        throw new Error('DATABASE_URL または POSTGRES_URL 環境変数が設定されていません');
       }
       
-      console.log('POSTGRES_URL確認完了');
-      
-      await sql`
-        CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          username TEXT UNIQUE NOT NULL,
-          password TEXT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-      console.log('usersテーブル作成完了');
+      console.log('データベースURL確認完了');
 
-      await sql`
-        CREATE TABLE IF NOT EXISTS posts (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL REFERENCES users(id),
-          content TEXT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-      console.log('postsテーブル作成完了');
+      if (!this.pgPool) {
+        throw new Error('PostgreSQL接続プールが初期化されていません');
+      }
 
-      await sql`
-        CREATE TABLE IF NOT EXISTS likes (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL REFERENCES users(id),
-          post_id INTEGER NOT NULL REFERENCES posts(id),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(user_id, post_id)
-        )
-      `;
-      console.log('likesテーブル作成完了');
+      const client = await this.pgPool.connect();
+      try {
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        console.log('usersテーブル作成完了');
 
-      await sql`
-        CREATE TABLE IF NOT EXISTS replies (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL REFERENCES users(id),
-          post_id INTEGER NOT NULL REFERENCES posts(id),
-          content TEXT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-      console.log('repliesテーブル作成完了');
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS posts (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        console.log('postsテーブル作成完了');
 
-      console.log('PostgreSQLテーブル初期化完了');
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS likes (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, post_id)
+          )
+        `);
+        console.log('likesテーブル作成完了');
+
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS replies (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        console.log('repliesテーブル作成完了');
+
+        console.log('PostgreSQLテーブル初期化完了');
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.error('PostgreSQLテーブル初期化エラー:', error);
       console.error('エラー詳細:', {
@@ -221,7 +258,9 @@ class DatabaseManager {
 
   // データベースを閉じる
   close() {
-    if (!this.isPostgres && this.db) {
+    if (this.isPostgres && this.pgPool) {
+      this.pgPool.end();
+    } else if (!this.isPostgres && this.db) {
       this.db.close();
     }
   }
