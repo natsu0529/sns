@@ -37,12 +37,33 @@ export default function Home() {
       console.log('API レスポンス:', response.status, response.statusText);
       
       if (response.ok) {
-        const data = await response.json();
+        // レスポンスのテキストを確認してからJSONパースを試行
+        const responseText = await response.text();
+        console.log('生のレスポンステキスト:', responseText);
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSONパースエラー:', parseError);
+          setPosts([]);
+          setError('レスポンスのJSONパースに失敗しました');
+          return;
+        }
+        
         console.log('取得データ:', {
           dataType: Array.isArray(data) ? 'array' : typeof data,
           dataLength: Array.isArray(data) ? data.length : 'not array',
           data: data
         });
+        
+        // エラーレスポンスの場合
+        if (data.error) {
+          console.error('APIエラー:', data.error, data.message);
+          setPosts(data.posts || []);
+          setError(`APIエラー: ${data.message || data.error}`);
+          return;
+        }
         
         // 確実に配列であることを保証
         if (Array.isArray(data)) {
@@ -54,13 +75,15 @@ export default function Home() {
         }
       } else {
         console.error('投稿取得失敗:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('エラーレスポンス:', errorText);
         setPosts([]);
-        setError(`投稿の取得に失敗しました (${response.status})`);
+        setError(`投稿の取得に失敗しました (${response.status}): ${errorText}`);
       }
     } catch (error) {
       console.error('投稿の取得でエラー:', error);
       setPosts([]);
-      setError('投稿の取得中にエラーが発生しました');
+      setError(`投稿の取得中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
