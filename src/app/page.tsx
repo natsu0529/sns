@@ -29,61 +29,36 @@ export default function Home() {
 
   // 投稿を取得
   const fetchPosts = async () => {
-    console.log('投稿取得開始...');
+    console.log('=== fetchPosts開始 ===');
     setError(null);
     
     try {
-      const response = await fetch('/api/posts');
-      console.log('API レスポンス:', response.status, response.statusText);
+      console.log('API呼び出し: /api/final-test');
+      const response = await fetch('/api/final-test');
+      console.log('レスポンス状態:', response.status, response.statusText);
       
-      if (response.ok) {
-        // レスポンスのテキストを確認してからJSONパースを試行
-        const responseText = await response.text();
-        console.log('生のレスポンステキスト:', responseText);
-        
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('JSONパースエラー:', parseError);
-          setPosts([]);
-          setError('レスポンスのJSONパースに失敗しました');
-          return;
-        }
-        
-        console.log('取得データ:', {
-          dataType: Array.isArray(data) ? 'array' : typeof data,
-          dataLength: Array.isArray(data) ? data.length : 'not array',
-          data: data
-        });
-        
-        // エラーレスポンスの場合
-        if (data.error) {
-          console.error('APIエラー:', data.error, data.message);
-          setPosts(data.posts || []);
-          setError(`APIエラー: ${data.message || data.error}`);
-          return;
-        }
-        
-        // 確実に配列であることを保証
-        if (Array.isArray(data)) {
-          setPosts(data);
-        } else {
-          console.error('APIが配列以外を返しました:', data);
-          setPosts([]);
-          setError('投稿データの形式が正しくありません');
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('JSONデータ受信:', data);
+      console.log('データの型:', Array.isArray(data) ? 'array' : typeof data);
+      console.log('データの長さ:', Array.isArray(data) ? data.length : 'N/A');
+      console.log('データの詳細:', JSON.stringify(data, null, 2));
+      
+      if (Array.isArray(data)) {
+        console.log('配列として設定:', data);
+        setPosts(data);
       } else {
-        console.error('投稿取得失敗:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('エラーレスポンス:', errorText);
+        console.error('APIが配列以外を返しました:', data);
         setPosts([]);
-        setError(`投稿の取得に失敗しました (${response.status}): ${errorText}`);
+        setError('投稿データの形式が正しくありません');
       }
     } catch (error) {
-      console.error('投稿の取得でエラー:', error);
+      console.error('fetchPosts エラー:', error);
       setPosts([]);
-      setError(`投稿の取得中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`);
+      setError(`投稿の取得に失敗: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -104,7 +79,8 @@ export default function Home() {
 
       if (response.ok) {
         setNewPost('');
-        fetchPosts(); // 投稿一覧を再読み込み
+        console.log('投稿作成成功 - 一覧を再読み込み');
+        await fetchPosts(); // 投稿一覧を再読み込み
       } else {
         let errorMessage = '投稿に失敗しました';
         try {
@@ -127,12 +103,14 @@ export default function Home() {
   // いいね機能
   const handleLike = async (postId: number) => {
     try {
+      console.log('いいね処理開始 - 投稿ID:', postId);
       const response = await fetch(`/api/posts/${postId}/like`, {
         method: 'POST',
       });
       
       if (response.ok) {
-        fetchPosts(); // 投稿一覧を再読み込み
+        console.log('いいね処理成功 - 一覧を再読み込み');
+        await fetchPosts(); // 投稿一覧を再読み込み
       } else {
         console.error('いいね処理失敗:', response.status, response.statusText);
       }
@@ -153,7 +131,8 @@ export default function Home() {
       });
       
       if (response.ok) {
-        fetchPosts(); // 投稿一覧を再読み込み
+        console.log('削除処理成功 - 一覧を再読み込み');
+        await fetchPosts(); // 投稿一覧を再読み込み
         alert('投稿が削除されました');
       } else {
         let errorMessage = '削除に失敗しました';
@@ -180,22 +159,18 @@ export default function Home() {
       return;
     }
     
-    // セッションが確認できてから投稿を取得
-    if (status === 'authenticated' && session) {
-      console.log('セッション確認完了、投稿取得開始');
-      fetchPosts();
-    } else if (status === 'unauthenticated') {
-      console.log('未認証のため投稿取得をスキップ');
-      setPosts([]);
-      setError(null);
-    }
-  }, [status, session]);
+    // テスト用：認証状態に関係なく新しいAPIを呼び出し
+    console.log('新しいAPIテスト実行');
+    fetchPosts();
+  }, [status]);
 
-  // セーフティチェック：postsが配列でない場合は空配列に修正
-  if (!Array.isArray(posts)) {
-    console.error('posts が配列ではありません:', posts);
-    setPosts([]);
-  }
+  // セーフティチェック：postsが配列でない場合は空配列に修正（useEffectに移動）
+  useEffect(() => {
+    if (!Array.isArray(posts)) {
+      console.error('posts が配列ではありません:', posts);
+      setPosts([]);
+    }
+  }, [posts]);
 
   if (status === 'loading') {
     return (
@@ -296,7 +271,7 @@ export default function Home() {
                       {new Date(post.created_at).toLocaleString('ja-JP')}
                     </span>
                     {/* 自分の投稿の場合のみ削除ボタンを表示 */}
-                    {post.username === session.user?.name && (
+                    {post.username === session?.user?.name && (
                       <button
                         onClick={() => handleDelete(post.id)}
                         className="text-red-500 hover:text-red-700 text-sm"
@@ -304,27 +279,27 @@ export default function Home() {
                       >
                         🗑️
                       </button>
-                  )}
+                    )}
+                  </div>
+                </div>
+                <p className="text-gray-800 mb-3">{post.content}</p>
+                <div className="flex items-center space-x-6 text-sm text-gray-500">
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className="flex items-center space-x-1 hover:text-red-500"
+                  >
+                    <span>❤️</span>
+                    <span>{post.like_count}</span>
+                  </button>
+                  <Link
+                    href={`/posts/${post.id}`}
+                    className="flex items-center space-x-1 hover:text-blue-500"
+                  >
+                    <span>💬</span>
+                    <span>{post.reply_count}</span>
+                  </Link>
                 </div>
               </div>
-              <p className="text-gray-800 mb-3">{post.content}</p>
-              <div className="flex items-center space-x-6 text-sm text-gray-500">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className="flex items-center space-x-1 hover:text-red-500"
-                >
-                  <span>❤️</span>
-                  <span>{post.like_count}</span>
-                </button>
-                <Link
-                  href={`/posts/${post.id}`}
-                  className="flex items-center space-x-1 hover:text-blue-500"
-                >
-                  <span>💬</span>
-                  <span>{post.reply_count}</span>
-                </Link>
-              </div>
-            </div>
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">

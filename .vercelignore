@@ -1,0 +1,5 @@
+# Vercel deployment ignores
+.eslintrc.json
+eslint.config.mjs
+eslint.config.mjs.bak
+.eslintcache

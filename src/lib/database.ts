@@ -1,65 +1,24 @@
 import Database from 'better-sqlite3';
-import { Pool } from 'pg';
 
-// Vercel環境ではPostgreSQL、ローカルではSQLite
-const isVercel = !!process.env.VERCEL;
-const hasDatabase = !!process.env.DATABASE_URL || !!process.env.POSTGRES_URL;
-// 一時的にPostgreSQLを無効化してテスト
-const isPostgres = false; // isVercel && hasDatabase;
+// 一時的にシンプルなSQLite設定に戻す
+const isVercel = false;
+const hasDatabase = false;
+const isPostgres = false;
 
 // データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
   private static instance: DatabaseManager;
   private db?: Database.Database;
-  private pgPool?: Pool;
-  private isPostgres: boolean;
   private initialized: boolean = false;
-  private initializationPromise?: Promise<void>;
 
   private constructor() {
-    this.isPostgres = isVercel && isPostgres;
-    
     console.log('=== DatabaseManager 初期化 ===');
-    console.log('isVercel:', isVercel);
-    console.log('hasDatabase:', hasDatabase);
-    console.log('isPostgres:', isPostgres);
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-    console.log('POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
-    
-    if (this.isPostgres) {
-      console.log('PostgreSQL使用中 (Vercel環境)');
-      // PostgreSQL接続プールを作成
-      const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-      if (dbUrl) {
-        console.log('データベースURL確認済み');
-        
-        // PostgreSQL接続設定（Vercel向けに最適化）
-        this.pgPool = new Pool({
-          connectionString: dbUrl,
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-          max: 20, // 最大接続数
-          idleTimeoutMillis: 30000, // アイドルタイムアウト: 30秒
-          connectionTimeoutMillis: 10000, // 接続タイムアウト: 10秒
-          statement_timeout: 30000, // ステートメントタイムアウト: 30秒
-          query_timeout: 30000, // クエリタイムアウト: 30秒
-        });
-        console.log('PostgreSQL接続プール作成完了');
-        
-        // 接続テスト
-        this.testConnection();
-      } else {
-        console.error('データベースURLが見つかりません');
-      }
-      // PostgreSQLの場合は非同期で初期化
-      this.initializationPromise = this.initializeTablesAsync();
-    } else {
-      console.log('SQLite使用中:', './sns.db');
-      this.db = new Database('./sns.db');
-      this.db.pragma('journal_mode = WAL');
-      // SQLiteは同期で初期化
-      this.initializeTablesSqlite();
-      this.initialized = true;
-    }
+    console.log('SQLite使用中:', './sns.db');
+    this.db = new Database('./sns.db');
+    this.db.pragma('journal_mode = WAL');
+    // SQLiteは同期で初期化
+    this.initializeTablesSqlite();
+    this.initialized = true;
   }
 
   // シングルトンインスタンスを取得
