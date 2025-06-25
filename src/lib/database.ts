@@ -31,11 +31,21 @@ class DatabaseManager {
       const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
       if (dbUrl) {
         console.log('データベースURL確認済み');
+        
+        // PostgreSQL接続設定（Vercel向けに最適化）
         this.pgPool = new Pool({
           connectionString: dbUrl,
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          max: 20, // 最大接続数
+          idleTimeoutMillis: 30000, // アイドルタイムアウト: 30秒
+          connectionTimeoutMillis: 10000, // 接続タイムアウト: 10秒
+          statement_timeout: 30000, // ステートメントタイムアウト: 30秒
+          query_timeout: 30000, // クエリタイムアウト: 30秒
         });
         console.log('PostgreSQL接続プール作成完了');
+        
+        // 接続テスト
+        this.testConnection();
       } else {
         console.error('データベースURLが見つかりません');
       }
@@ -87,13 +97,23 @@ class DatabaseManager {
       let paramIndex = 1;
       const pgQuery = sqlQuery.replace(/\?/g, () => `$${paramIndex++}`);
       console.log('PostgreSQL Query:', pgQuery, 'Params:', params);
-      const client = await this.pgPool.connect();
-      try {
-        const result = await client.query(pgQuery, params);
-        return result;
-      } finally {
-        client.release();
-      }
+      
+      // タイムアウト処理付きでクエリ実行
+      const queryPromise = (async () => {
+        const client = await this.pgPool!.connect();
+        try {
+          const result = await client.query(pgQuery, params);
+          return result;
+        } finally {
+          client.release();
+        }
+      })();
+      
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('クエリタイムアウト (30秒)')), 30000);
+      });
+      
+      return await Promise.race([queryPromise, timeout]);
     } else {
       return this.db!.prepare(sqlQuery).run(...params);
     }
@@ -129,13 +149,23 @@ class DatabaseManager {
       let paramIndex = 1;
       const pgQuery = sqlQuery.replace(/\?/g, () => `$${paramIndex++}`);
       console.log('PostgreSQL Query:', pgQuery, 'Params:', params);
-      const client = await this.pgPool.connect();
-      try {
-        const result = await client.query(pgQuery, params);
-        return result.rows;
-      } finally {
-        client.release();
-      }
+      
+      // タイムアウト処理付きでクエリ実行
+      const queryPromise = (async () => {
+        const client = await this.pgPool!.connect();
+        try {
+          const result = await client.query(pgQuery, params);
+          return result.rows;
+        } finally {
+          client.release();
+        }
+      })();
+      
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('クエリタイムアウト (30秒)')), 30000);
+      });
+      
+      return await Promise.race([queryPromise, timeout]);
     } else {
       return this.db!.prepare(sqlQuery).all(...params);
     }
@@ -288,6 +318,24 @@ class DatabaseManager {
       this.pgPool.end();
     } else if (!this.isPostgres && this.db) {
       this.db.close();
+    }
+  }
+
+  // PostgreSQL接続テスト
+  private async testConnection(): Promise<void> {
+    if (this.pgPool) {
+      try {
+        console.log('PostgreSQL接続テスト開始...');
+        const client = await this.pgPool.connect();
+        try {
+          const result = await client.query('SELECT NOW()');
+          console.log('PostgreSQL接続テスト成功:', result.rows[0]);
+        } finally {
+          client.release();
+        }
+      } catch (error) {
+        console.error('PostgreSQL接続テスト失敗:', error);
+      }
     }
   }
 }
