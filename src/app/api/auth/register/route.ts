@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const db = DatabaseManager.getInstance();
     try {
       // ユーザー名の重複チェック
-      const existingUser = db.get(
+      const existingUser = await db.get(
         'SELECT id FROM users WHERE username = ?',
         username
       ) as UserRecord | undefined;
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // ユーザーを作成
-      db.run(
+      await db.run(
         'INSERT INTO users (username, password) VALUES (?, ?)',
         username, hashedPassword
       );

@@ -31,7 +31,7 @@ export const authOptions = {
 
         const db = DatabaseManager.getInstance();
         try {
-          const user = db.get(
+          const user = await db.get(
             'SELECT * FROM users WHERE username = ?',
             credentials.username
           ) as UserRecord | undefined;
