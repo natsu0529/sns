@@ -135,3 +135,23 @@ SQLite tables initialized successfully
  ✓ Compiled in 137ms (374 modules)
  ✓ Compiled in 218ms (374 modules)
  ✓ Compiled in 95ms (374 modules)
+ ✓ Compiled in 1040ms (851 modules)
+ ⨯ ./src/app/page.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/Users/natsus/Desktop/sns/src/app/page.tsx[0m:178:1]
+ [2m175[0m |   }
+ [2m176[0m | 
+ [2m177[0m |   return (
+ [2m178[0m |     <div className="min-h-screen bg-gray-50">
+     : [35;1m     ^^^[0m
+ [2m179[0m |       {/* ヘッダー */}
+ [2m180[0m |       <header className="bg-white shadow-sm border-b">
+ [2m181[0m |         <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/page.tsx
+ ✓ Compiled in 229ms (837 modules)

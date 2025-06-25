@@ -21,16 +21,33 @@ export default function Home() {
 
   // 投稿を取得
   const fetchPosts = async () => {
+    console.log('投稿取得開始...');
     try {
       const response = await fetch('/api/posts');
+      console.log('API レスポンス:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
-        setPosts(data);
+        console.log('取得データ:', {
+          dataType: Array.isArray(data) ? 'array' : typeof data,
+          dataLength: Array.isArray(data) ? data.length : 'not array',
+          data: data
+        });
+        
+        // 確実に配列であることを保証
+        if (Array.isArray(data)) {
+          setPosts(data);
+        } else {
+          console.error('APIが配列以外を返しました:', data);
+          setPosts([]);
+        }
       } else {
         console.error('投稿取得失敗:', response.status, response.statusText);
+        setPosts([]);
       }
     } catch (error) {
       console.error('投稿の取得でエラー:', error);
+      setPosts([]);
     }
   };
 
@@ -204,23 +221,24 @@ export default function Home() {
 
         {/* 投稿一覧 */}
         <div className="space-y-4">
-          {posts.map((post) => (
-            <div key={post.id} className="bg-white rounded-lg shadow-sm border p-4">
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-medium text-gray-900">@{post.username}</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">
-                    {new Date(post.created_at).toLocaleString('ja-JP')}
-                  </span>
-                  {/* 自分の投稿の場合のみ削除ボタンを表示 */}
-                  {post.username === session.user?.name && (
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                      title="投稿を削除"
-                    >
-                      🗑️
-                    </button>
+          {Array.isArray(posts) && posts.length > 0 ? (
+            posts.map((post) => (
+              <div key={post.id} className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-medium text-gray-900">@{post.username}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">
+                      {new Date(post.created_at).toLocaleString('ja-JP')}
+                    </span>
+                    {/* 自分の投稿の場合のみ削除ボタンを表示 */}
+                    {post.username === session.user?.name && (
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                        title="投稿を削除"
+                      >
+                        🗑️
+                      </button>
                   )}
                 </div>
               </div>
@@ -242,14 +260,13 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              {posts.length === 0 ? 'まだ投稿がありません' : '投稿を読み込んでいます...'}
+            </div>
+          )}
         </div>
-
-        {posts.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            まだ投稿がありません
-          </div>
-        )}
       </main>
     </div>
   );
