@@ -18,10 +18,20 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  console.log('Home コンポーネント レンダリング:', { 
+    status, 
+    hasSession: !!session, 
+    postsType: Array.isArray(posts) ? 'array' : typeof posts,
+    postsLength: Array.isArray(posts) ? posts.length : 'not array'
+  });
 
   // 投稿を取得
   const fetchPosts = async () => {
     console.log('投稿取得開始...');
+    setError(null);
+    
     try {
       const response = await fetch('/api/posts');
       console.log('API レスポンス:', response.status, response.statusText);
@@ -40,14 +50,17 @@ export default function Home() {
         } else {
           console.error('APIが配列以外を返しました:', data);
           setPosts([]);
+          setError('投稿データの形式が正しくありません');
         }
       } else {
         console.error('投稿取得失敗:', response.status, response.statusText);
         setPosts([]);
+        setError(`投稿の取得に失敗しました (${response.status})`);
       }
     } catch (error) {
       console.error('投稿の取得でエラー:', error);
       setPosts([]);
+      setError('投稿の取得中にエラーが発生しました');
     }
   };
 
@@ -136,8 +149,30 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    console.log('useEffect実行:', { status, hasSession: !!session });
+    
+    // 読み込み中は何もしない
+    if (status === 'loading') {
+      console.log('セッション読み込み中...');
+      return;
+    }
+    
+    // セッションが確認できてから投稿を取得
+    if (status === 'authenticated' && session) {
+      console.log('セッション確認完了、投稿取得開始');
+      fetchPosts();
+    } else if (status === 'unauthenticated') {
+      console.log('未認証のため投稿取得をスキップ');
+      setPosts([]);
+      setError(null);
+    }
+  }, [status, session]);
+
+  // セーフティチェック：postsが配列でない場合は空配列に修正
+  if (!Array.isArray(posts)) {
+    console.error('posts が配列ではありません:', posts);
+    setPosts([]);
+  }
 
   if (status === 'loading') {
     return (
@@ -218,6 +253,13 @@ export default function Home() {
             </div>
           </form>
         </div>
+
+        {/* エラー表示 */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         {/* 投稿一覧 */}
         <div className="space-y-4">

@@ -155,3 +155,10 @@ Caused by:
 Import trace for requested module:
 ./src/app/page.tsx
  ✓ Compiled in 229ms (837 modules)
+ ✓ Compiled in 350ms (851 modules)
+ ✓ Compiled in 170ms (851 modules)
+ ✓ Compiled in 160ms (851 modules)
+ ✓ Compiled in 174ms (851 modules)
+ ✓ Compiled in 156ms (851 modules)
+ ✓ Compiled in 157ms (851 modules)
+ ✓ Compiled in 191ms (851 modules)
