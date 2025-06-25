@@ -62,8 +62,19 @@ class DatabaseManager {
   // 初期化が完了するまで待機
   private async ensureInitialized(): Promise<void> {
     if (this.isPostgres && this.initializationPromise) {
-      await this.initializationPromise;
-      this.initialized = true;
+      try {
+        // 初期化に15秒のタイムアウトを設定
+        const timeout = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('データベース初期化タイムアウト (15秒)')), 15000);
+        });
+        
+        await Promise.race([this.initializationPromise, timeout]);
+        this.initialized = true;
+      } catch (error) {
+        console.error('データベース初期化待機中にエラー:', error);
+        // 初期化に失敗してもクエリは実行を試行する
+        this.initialized = true; // エラー状態でも継続
+      }
     }
   }
 
@@ -149,48 +160,57 @@ class DatabaseManager {
 
       const client = await this.pgPool.connect();
       try {
-        await client.query(`
-          CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
-        `);
-        console.log('usersテーブル作成完了');
+        // タイムアウト付きでテーブル作成
+        const createTables = async () => {
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS users (
+              id SERIAL PRIMARY KEY,
+              username TEXT UNIQUE NOT NULL,
+              password TEXT NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          console.log('usersテーブル作成完了');
 
-        await client.query(`
-          CREATE TABLE IF NOT EXISTS posts (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id),
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
-        `);
-        console.log('postsテーブル作成完了');
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS posts (
+              id SERIAL PRIMARY KEY,
+              user_id INTEGER NOT NULL REFERENCES users(id),
+              content TEXT NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          console.log('postsテーブル作成完了');
 
-        await client.query(`
-          CREATE TABLE IF NOT EXISTS likes (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id),
-            post_id INTEGER NOT NULL REFERENCES posts(id),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, post_id)
-          )
-        `);
-        console.log('likesテーブル作成完了');
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS likes (
+              id SERIAL PRIMARY KEY,
+              user_id INTEGER NOT NULL REFERENCES users(id),
+              post_id INTEGER NOT NULL REFERENCES posts(id),
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              UNIQUE(user_id, post_id)
+            )
+          `);
+          console.log('likesテーブル作成完了');
 
-        await client.query(`
-          CREATE TABLE IF NOT EXISTS replies (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id),
-            post_id INTEGER NOT NULL REFERENCES posts(id),
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
-        `);
-        console.log('repliesテーブル作成完了');
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS replies (
+              id SERIAL PRIMARY KEY,
+              user_id INTEGER NOT NULL REFERENCES users(id),
+              post_id INTEGER NOT NULL REFERENCES posts(id),
+              content TEXT NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          console.log('repliesテーブル作成完了');
+        };
 
+        // 10秒のタイムアウトを設定
+        const timeout = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('テーブル初期化タイムアウト (10秒)')), 10000);
+        });
+
+        await Promise.race([createTables(), timeout]);
         console.log('PostgreSQLテーブル初期化完了');
       } finally {
         client.release();
@@ -202,7 +222,8 @@ class DatabaseManager {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      throw error;
+      // 初期化エラーでもアプリケーションは継続
+      console.log('テーブル初期化に失敗しましたが、アプリケーションは継続します');
     }
   }
 
