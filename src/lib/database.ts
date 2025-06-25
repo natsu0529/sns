@@ -1,10 +1,10 @@
 import Database from 'better-sqlite3';
-import { sql } from '@vercel/postgres';
 import { Pool } from 'pg';
 
 // Vercel環境ではPostgreSQL、ローカルではSQLite
 const isVercel = !!process.env.VERCEL;
-const isPostgres = !!process.env.DATABASE_URL || !!process.env.POSTGRES_URL;
+const hasDatabase = !!process.env.DATABASE_URL || !!process.env.POSTGRES_URL;
+const isPostgres = isVercel && hasDatabase;
 
 // データベース接続クラス（シングルトンパターン）
 class DatabaseManager {
@@ -20,6 +20,7 @@ class DatabaseManager {
     
     console.log('=== DatabaseManager 初期化 ===');
     console.log('isVercel:', isVercel);
+    console.log('hasDatabase:', hasDatabase);
     console.log('isPostgres:', isPostgres);
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
     console.log('POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
@@ -29,10 +30,14 @@ class DatabaseManager {
       // PostgreSQL接続プールを作成
       const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
       if (dbUrl) {
+        console.log('データベースURL確認済み');
         this.pgPool = new Pool({
           connectionString: dbUrl,
           ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
         });
+        console.log('PostgreSQL接続プール作成完了');
+      } else {
+        console.error('データベースURLが見つかりません');
       }
       // PostgreSQLの場合は非同期で初期化
       this.initializationPromise = this.initializeTablesAsync();

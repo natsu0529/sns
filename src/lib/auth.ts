@@ -24,6 +24,9 @@ export const authOptions = {
         password: { label: 'パスワード', type: 'password' }
       },
       async authorize(credentials): Promise<ExtendedUser | null> {
+        console.log('=== NextAuth Authorize 開始 ===');
+        console.log('Credentials:', { username: credentials?.username, hasPassword: !!credentials?.password });
+        
         if (!credentials?.username || !credentials?.password) {
           console.log('認証失敗: 認証情報が不足');
           return null;
@@ -40,10 +43,12 @@ export const authOptions = {
 
           if (user && await bcrypt.compare(credentials.password, user.password)) {
             console.log(`認証成功: ${user.username}`);
-            return {
+            const result = {
               id: user.id.toString(),
               name: user.username,
             };
+            console.log('認証結果:', result);
+            return result;
           }
           
           console.log('認証失敗: パスワード不一致またはユーザー不存在');
@@ -59,12 +64,19 @@ export const authOptions = {
   pages: {
     signIn: '/auth/signin',
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // 本番環境でもデバッグを有効化（一時的）
   callbacks: {
-    session: async ({ session, token }: { session: any; token: any }) => {
-      if (token.sub && session.user) {
-        // ユーザーIDをセッションに追加
-        (session.user as { id?: string }).id = token.sub;
+    async jwt({ token, user }: { token: any; user?: any }) {
+      console.log('JWT Callback:', { token, user });
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: any; token: any }) {
+      console.log('Session Callback:', { session, token });
+      if (token.id && session.user) {
+        session.user.id = token.id;
       }
       return session;
     },
