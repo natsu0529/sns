@@ -16,6 +16,11 @@ class DatabaseManager {
   private constructor() {
     this.isPostgres = isVercel && isPostgres;
     
+    console.log('=== DatabaseManager 初期化 ===');
+    console.log('isVercel:', isVercel);
+    console.log('isPostgres:', isPostgres);
+    console.log('POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
+    
     if (this.isPostgres) {
       console.log('PostgreSQL使用中 (Vercel環境)');
       // PostgreSQLの場合は非同期で初期化
@@ -98,6 +103,13 @@ class DatabaseManager {
     try {
       console.log('PostgreSQLテーブル初期化中...');
       
+      // 環境変数の確認
+      if (!process.env.POSTGRES_URL) {
+        throw new Error('POSTGRES_URL環境変数が設定されていません');
+      }
+      
+      console.log('POSTGRES_URL確認完了');
+      
       await sql`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -106,6 +118,7 @@ class DatabaseManager {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `;
+      console.log('usersテーブル作成完了');
 
       await sql`
         CREATE TABLE IF NOT EXISTS posts (
@@ -115,6 +128,7 @@ class DatabaseManager {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `;
+      console.log('postsテーブル作成完了');
 
       await sql`
         CREATE TABLE IF NOT EXISTS likes (
@@ -125,6 +139,7 @@ class DatabaseManager {
           UNIQUE(user_id, post_id)
         )
       `;
+      console.log('likesテーブル作成完了');
 
       await sql`
         CREATE TABLE IF NOT EXISTS replies (
@@ -135,10 +150,16 @@ class DatabaseManager {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `;
+      console.log('repliesテーブル作成完了');
 
       console.log('PostgreSQLテーブル初期化完了');
     } catch (error) {
       console.error('PostgreSQLテーブル初期化エラー:', error);
+      console.error('エラー詳細:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }

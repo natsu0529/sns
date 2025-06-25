@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import DatabaseManager from '@/lib/database';
 
 export async function GET(request: NextRequest) {
-  // 本番環境では無効化（セキュリティのため）
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json(
-      { error: 'Debug endpoint disabled in production' },
-      { status: 403 }
-    );
-  }
+  // 一時的に本番環境でも有効化（デバッグのため）
+  // if (process.env.NODE_ENV === 'production') {
+  //   return NextResponse.json(
+  //     { error: 'Debug endpoint disabled in production' },
+  //     { status: 403 }
+  //   );
+  // }
 
   try {
     console.log('=== データベース接続テスト開始 ===');
